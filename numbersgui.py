@@ -107,9 +107,6 @@ class NumbersGUI():
         self.mini_img = Label(self.mini_display, image=self.pic)
         self.mini_img.place(relx=0.5, rely=0.5, anchor=CENTER)
 
-
-
-
     def reset_canvas(self):
         self.img = np.zeros((self.img_dim, self.img_dim))
         self.canvas.delete('all')
