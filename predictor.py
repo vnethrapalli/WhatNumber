@@ -31,7 +31,5 @@ class NumberClassifier:
             activations = sigmoid(np.dot(wt, activations))
 
         outputs = activations.T[0]
-        if np.max(outputs) < 0.5:
-            return -1
 
         return np.argmax(outputs)
