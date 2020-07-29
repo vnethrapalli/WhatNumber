@@ -32,4 +32,5 @@ class NumberClassifier:
 
         outputs = activations.T[0]
 
+
         return np.argmax(outputs)

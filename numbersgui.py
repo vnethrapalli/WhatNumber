@@ -100,15 +100,15 @@ class NumbersGUI:
 
     def update(self, event):
         # update current prediction
-        #guess = self.classifier.classify(self.img.flatten())
-        #Label(self.answer_display, text=str(guess), bg='lavender', fg='MediumPurple3', padx=20, font=(48), anchor=CENTER).grid(row=1, column=0)
+        guess = self.classifier.classify(self.img.T.flatten())
+        Label(self.answer_display, text=str(guess), bg='lavender', fg='MediumPurple3', padx=20, font=(48), anchor=CENTER).grid(row=1, column=0)
 
         self.update_mini_display()
 
     def reset_canvas(self):
         self.img = np.zeros((self.img_dim, self.img_dim))
         self.canvas.delete('all')
-        Label(self.answer_display, text='???', bg='lavender', padx=20, font=(48), anchor=CENTER).grid(row=1, column=0)
+        Label(self.answer_display, text='???', bg='lavender', fg='MediumPurple3', padx=20, font=(48), anchor=CENTER).grid(row=1, column=0)
 
         self.update_mini_display()
 
@@ -130,7 +130,7 @@ class NumbersGUI:
                 values += v
 
         values = np.asarray([values])
-        self.img = values.T.reshape(self.img_dim, self.img_dim)
+        self.img = values.reshape(self.img_dim, self.img_dim).T
 
         for row in range(len(self.img)):
             for col in range(len(self.img[row])):
@@ -138,11 +138,17 @@ class NumbersGUI:
                 if len(hex_val) == 1:
                     hex_val = '0' + hex_val
 
-                    color = '#' + 3 * hex_val
-                    xpt = row * self.pix_dim
-                    ypt = col * self.pix_dim
-                    self.canvas.create_rectangle(xpt, ypt, xpt + self.pix_dim, ypt + self.pix_dim, fill=color,
-                                                 outline='')
+                color = '#' + 3 * hex_val
+                xpt = row * self.pix_dim
+                ypt = col * self.pix_dim
+                self.canvas.create_rectangle(xpt, ypt, xpt + self.pix_dim, ypt + self.pix_dim, fill=color,outline='')
+
+        self.update_mini_display()
+
+        # update current prediction
+        guess = self.classifier.classify(self.img.T.flatten())
+        Label(self.answer_display, text=str(guess), bg='lavender', fg='MediumPurple3', padx=20, font=(48),
+              anchor=CENTER).grid(row=1, column=0)
 
 
     def update_mini_display(self):
