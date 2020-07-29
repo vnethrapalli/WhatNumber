@@ -10,8 +10,10 @@ class NumbersGUI:
     def __init__(self, master=None):
         self.master = master
 
-        self.img_dim = 20
-        self.master.geometry('{}x{}'.format(self.img_dim ** 2 + 154, self.img_dim ** 2 + 154))
+        self.img_dim = 28
+        self.pix_dim = 15
+        self.menubar_thickness = 150
+        self.master.geometry('{}x{}'.format(self.pix_dim * self.img_dim + self.menubar_thickness + 4, self.pix_dim * self.img_dim + self.menubar_thickness + 4))
 
         # colored grid
         self.img = np.zeros((self.img_dim, self.img_dim))
@@ -26,20 +28,20 @@ class NumbersGUI:
 
     def create_widgets(self):
         # top and bottom row frames
-        self.top_frame = Frame(self.master, bg='lavender', width=self.img_dim ** 2 + 150, height=150)
-        self.btm_frame = Frame(self.master, bg='lavender', width=self.img_dim ** 2 + 150, height=self.img_dim ** 2)
+        self.top_frame = Frame(self.master, bg='lavender', width=self.pix_dim * self.img_dim + self.menubar_thickness, height=self.menubar_thickness)
+        self.btm_frame = Frame(self.master, bg='lavender', width=self.pix_dim * self.img_dim + self.menubar_thickness, height=self.pix_dim * self.img_dim)
 
         self.top_frame.grid(row=0, sticky='ew')
         self.btm_frame.grid(row=1, sticky='ew')
 
         # left and right for each row
-        self.funcs = Frame(self.top_frame, bg='lavender', width=self.img_dim ** 2, height=150, padx=3, pady=3)
-        self.mini_display = Frame(self.top_frame, bg='lavender', width=150, height=150, padx=3, pady=3)
+        self.funcs = Frame(self.top_frame, bg='lavender', width=self.pix_dim * self.img_dim, height=self.menubar_thickness, padx=3, pady=3)
+        self.mini_display = Frame(self.top_frame, bg='lavender', width=self.menubar_thickness, height=self.menubar_thickness, padx=3, pady=3)
         self.funcs.grid(row=0, column=0, sticky='nsew')
         self.mini_display.grid(row=0, column=1, sticky='nsew')
 
-        self.canvas = Canvas(self.btm_frame, bg='#000000', width=self.img_dim ** 2, height=self.img_dim ** 2)
-        self.answer_display = Frame(self.btm_frame, bg='lavender', width=150, height=self.img_dim ** 2, padx=3, pady=3)
+        self.canvas = Canvas(self.btm_frame, bg='#000000', width=self.pix_dim * self.img_dim, height=self.pix_dim * self.img_dim)
+        self.answer_display = Frame(self.btm_frame, bg='lavender', width=self.menubar_thickness, height=self.pix_dim * self.img_dim, padx=3, pady=3)
         self.canvas.grid(row=0, column=0, sticky='nsew')
         self.answer_display.grid(row=0, column=1,  sticky='nsew')
 
@@ -49,7 +51,7 @@ class NumbersGUI:
         # add grayscale color slider (+ labels for the top left segment)
         Label(self.funcs, text='grayscale float value', bg='lavender', font=(24)).grid(row=0, column=0)
         self.color_slider = Scale(self.funcs, from_=0.0, to_=1.0, resolution=0.01, orient=HORIZONTAL, bg='lavender', command=self.adjust_color)
-        self.color_slider.grid(row=1, column=0, ipadx=145, ipady=20)
+        self.color_slider.grid(row=1, column=0, ipadx=155, ipady=20)
         self.curr_color = Label(self.funcs, text='             ', bg=self.pen_color, font=(24)).grid(row=2, column=0)
 
         # canvas actions
@@ -88,19 +90,18 @@ class NumbersGUI:
         Label(self.funcs, text='             ', bg=self.pen_color, font=(24)).grid(row=2, column=0)
 
     def draw(self, event):
-        xpt = event.x - (event.x % self.img_dim)
-        ypt = event.y - (event.y % self.img_dim)
-        self.canvas.create_rectangle(xpt, ypt, xpt + self.img_dim, ypt + self.img_dim, fill=self.pen_color, outline='')
+        xpt = event.x - (event.x % self.pix_dim)
+        ypt = event.y - (event.y % self.pix_dim)
+        self.canvas.create_rectangle(xpt, ypt, xpt + self.pix_dim, ypt + self.pix_dim, fill=self.pen_color, outline='')
 
         # update color matrix
         color_float = int(self.pen_color[-2:], 16) / 255
-        self.img[xpt // self.img_dim][ypt // self.img_dim] = color_float
+        self.img[xpt // self.pix_dim][ypt // self.pix_dim] = color_float
 
     def update(self, event):
         # update current prediction
-        print('k')
-        guess = self.classifier.classify(self.img.T.flatten())
-        Label(self.answer_display, text=str(guess), bg='lavender', fg='MediumPurple3', padx=20, font=(48), anchor=CENTER).grid(row=1, column=0)
+        #guess = self.classifier.classify(self.img.flatten())
+        #Label(self.answer_display, text=str(guess), bg='lavender', fg='MediumPurple3', padx=20, font=(48), anchor=CENTER).grid(row=1, column=0)
 
         self.update_mini_display()
 
@@ -138,9 +139,9 @@ class NumbersGUI:
                     hex_val = '0' + hex_val
 
                     color = '#' + 3 * hex_val
-                    xpt = row * self.img_dim
-                    ypt = col * self.img_dim
-                    self.canvas.create_rectangle(xpt, ypt, xpt + self.img_dim, ypt + self.img_dim, fill=color,
+                    xpt = row * self.pix_dim
+                    ypt = col * self.pix_dim
+                    self.canvas.create_rectangle(xpt, ypt, xpt + self.pix_dim, ypt + self.pix_dim, fill=color,
                                                  outline='')
 
 
@@ -151,7 +152,6 @@ class NumbersGUI:
         self.pic = ImageTk.PhotoImage(Img.open('nums/num.png'))
         self.mini_img = Label(self.mini_display, image=self.pic)
         self.mini_img.place(relx=0.5, rely=0.5, anchor=CENTER)
-
 
 
 root = Tk()
