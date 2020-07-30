@@ -96,7 +96,8 @@ class NumbersGUI:
 
         # update color matrix
         color_float = int(self.pen_color[-2:], 16) / 255
-        self.img[xpt // self.pix_dim][ypt // self.pix_dim] = color_float
+        if xpt >= 0 and xpt < self.img_dim * self.pix_dim and ypt >= 0 and ypt < self.img_dim * self.pix_dim:
+            self.img[xpt // self.pix_dim][ypt // self.pix_dim] = color_float
 
     def update(self, event):
         # update current prediction
@@ -162,5 +163,6 @@ class NumbersGUI:
 
 root = Tk()
 root.title("Guessing Numbers")
+root.resizable(False, False)
 gui = NumbersGUI(master=root)
 root.mainloop()
