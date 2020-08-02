@@ -22,6 +22,7 @@ class NumbersGUI:
         self.classifier = NumberClassifier()
 
         self.pen_color = '#000000'
+        self.faded_pen = '#000000'
 
         self.create_widgets()
 
@@ -83,25 +84,41 @@ class NumbersGUI:
 
     def adjust_color(self, val):
         hex_val = str(hex(int(float(val[:5]) * 255)))[2:]
+        faded = str(hex(int(0.9 * float(val[:5]) * 255)))[2:]
         if len(hex_val) == 1:
             hex_val = '0' + hex_val
 
+        if len(faded) == 1:
+            faded = '0' + faded
+
         self.pen_color = '#' + 3 * hex_val
+        self.faded_pen = '#' + 3 * faded
         Label(self.funcs, text='             ', bg=self.pen_color, font=(24)).grid(row=2, column=0)
 
     def draw(self, event):
-        xpt = event.x - (event.x % self.pix_dim)
-        ypt = event.y - (event.y % self.pix_dim)
-        self.canvas.create_rectangle(xpt, ypt, xpt + self.pix_dim, ypt + self.pix_dim, fill=self.pen_color, outline='')
+        xpt = (event.x - (event.x % self.pix_dim)) // self.pix_dim
+        ypt = (event.y - (event.y % self.pix_dim)) // self.pix_dim
 
-        # update color matrix
+        #draw faded portions
+        faded_float = int(self.faded_pen[-2:], 16) / 255
+        if ypt + 1 < self.img_dim  and xpt < self.img_dim and xpt >= 0:
+            self.canvas.create_rectangle(xpt * self.pix_dim, (ypt + 1) * self.pix_dim, (xpt + 1) * self.pix_dim, (ypt + 2) * self.pix_dim, fill=self.faded_pen,outline='')
+            self.img[ypt + 1][xpt] = faded_float
+
+        if xpt - 1 >= 0 and xpt < self.img_dim and ypt < self.img_dim and ypt >= 0:
+            self.canvas.create_rectangle((xpt - 1) * self.pix_dim, ypt * self.pix_dim, xpt * self.pix_dim, (ypt + 1) * self.pix_dim, fill=self.faded_pen,outline='')
+            self.img[ypt][xpt - 1] = faded_float
+
+        # draw main portion
         color_float = int(self.pen_color[-2:], 16) / 255
-        if xpt >= 0 and xpt < self.img_dim * self.pix_dim and ypt >= 0 and ypt < self.img_dim * self.pix_dim:
-            self.img[xpt // self.pix_dim][ypt // self.pix_dim] = color_float
+        if xpt >= 0 and xpt < self.img_dim and ypt >= 0 and ypt < self.img_dim:
+            self.canvas.create_rectangle(xpt * self.pix_dim, ypt * self.pix_dim, (xpt + 1) * self.pix_dim, (ypt + 1) * self.pix_dim, fill=self.pen_color,
+                                         outline='')
+            self.img[ypt][xpt] = color_float
 
     def update(self, event):
         # update current prediction
-        guess = self.classifier.classify(self.img.T.flatten())
+        guess = self.classifier.classify(self.img.flatten())
         Label(self.answer_display, text=str(guess), bg='lavender', fg='MediumPurple3', padx=20, font=(48), anchor=CENTER).grid(row=1, column=0)
 
         self.update_mini_display()
@@ -147,13 +164,13 @@ class NumbersGUI:
         self.update_mini_display()
 
         # update current prediction
-        guess = self.classifier.classify(self.img.T.flatten())
+        guess = self.classifier.classify(self.img.flatten())
         Label(self.answer_display, text=str(guess), bg='lavender', fg='MediumPurple3', padx=20, font=(48),
               anchor=CENTER).grid(row=1, column=0)
 
 
     def update_mini_display(self):
-        im = Img.fromarray(255 * self.img.T)
+        im = Img.fromarray(255 * self.img)
         im = im.convert('RGB')
         im.save('nums/num.png')
         self.pic = ImageTk.PhotoImage(Img.open('nums/num.png'))
