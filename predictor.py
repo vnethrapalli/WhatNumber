@@ -15,7 +15,7 @@ class NumberClassifier:
                     values = np.asarray([[float(val.strip()) for val in line.split(',')]])
                     self.weights.append(values.reshape(dims))
 
-        self.weights = np.asarray(self.weights)
+        # self.weights = np.asarray(self.weights)
 
     # returns the number corresponding to the largest output activation, but -1 if no output is greater than 0.5
     def classify(self, input_vec):
@@ -24,6 +24,7 @@ class NumberClassifier:
 
         activations = np.asarray([input_vec]).T
         for wt in self.weights:
+            wt = np.asarray(wt)
             # add on the bias unit to the vector
             activations = np.concatenate(([[1]], activations))
 
