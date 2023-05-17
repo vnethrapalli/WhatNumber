@@ -3,6 +3,7 @@ from PIL import ImageTk
 from tkinter import *
 import numpy as np
 from predictor import NumberClassifier
+from pytorch_predictor import LenetClassifier
 import os
 
 
@@ -20,9 +21,10 @@ class NumbersGUI:
 
         # neural net classifier
         self.classifier = NumberClassifier()
+        self.pt_classifier = None
+        self.curr_pt_classifier = ''
 
         self.pen_color = '#000000'
-        self.faded_pen = '#000000'
 
         self.create_widgets()
 
@@ -52,6 +54,7 @@ class NumbersGUI:
         # add grayscale color slider (+ labels for the top left segment)
         Label(self.funcs, text='grayscale float value', bg='lavender', font=(24)).grid(row=0, column=0)
         self.color_slider = Scale(self.funcs, from_=0.0, to_=1.0, resolution=0.01, orient=HORIZONTAL, bg='lavender', command=self.adjust_color)
+        self.color_slider.set(1.0)
         self.color_slider.grid(row=1, column=0, ipadx=155, ipady=20)
         self.curr_color = Label(self.funcs, text='             ', bg=self.pen_color, font=(24)).grid(row=2, column=0)
 
@@ -72,7 +75,7 @@ class NumbersGUI:
         # puts the image in the mini display
         self.update_mini_display()
 
-        # create loading button and entry
+        # create image loading button and entry
         Label(self.answer_display, text='enter .txt file to load', bg='lavender', pady=10).grid(row=2, column=0)
         self.fileentry = Entry(self.answer_display, textvariable=StringVar(self.answer_display, 'values/namehere.txt'))
         self.fileentry.grid(row=3, column=0)
@@ -81,31 +84,28 @@ class NumbersGUI:
         self.ld_message = Label(self.answer_display, text=' ', bg='lavender', fg='red', pady=5)
         self.ld_message.grid(row=5, column=0)
 
+        # create model selector
+        self.selected_model = StringVar()
+        self.selected_model.set('mnist_lenet.pth')
+
+        self.model_selector_lbl = Label(self.answer_display, text='choose a model', bg='lavender')
+        self.model_selector_lbl.grid(row=6, column=0)
+
+        options = ['from scratch']
+        options.extend([f for f in os.listdir('pytorch/models/') if os.path.isfile(os.path.join('pytorch/models/', self.selected_model.get()))])
+        self.model_selector = OptionMenu(self.answer_display, self.selected_model, *options)
+        self.model_selector.grid(row=7, column=0)
+
 
     def adjust_color(self, val):
         hex_val = str(hex(int(float(val[:5]) * 255)))[2:]
-        # faded = str(hex(int(0.9 * float(val[:5]) * 255)))[2:]
         if len(hex_val) == 1:
             hex_val = '0' + hex_val
 
-        # if len(faded) == 1:
-        #     faded = '0' + faded
-
         self.pen_color = '#' + 3 * hex_val
-        # self.faded_pen = '#' + 3 * faded
         Label(self.funcs, text='             ', bg=self.pen_color, font=(24)).grid(row=2, column=0)
 
     def draw(self, event):
-        # draw faded portions
-        # faded_float = int(self.faded_pen[-2:], 16) / 255
-        # if ypt + 1 < self.img_dim  and xpt < self.img_dim and xpt >= 0:
-        #     self.canvas.create_rectangle(xpt * self.pix_dim, (ypt + 1) * self.pix_dim, (xpt + 1) * self.pix_dim, (ypt + 2) * self.pix_dim, fill=self.faded_pen,outline='')
-        #     self.img[ypt + 1][xpt] = faded_float
-
-        # if xpt - 1 >= 0 and xpt < self.img_dim and ypt < self.img_dim and ypt >= 0:
-        #     self.canvas.create_rectangle((xpt - 1) * self.pix_dim, ypt * self.pix_dim, xpt * self.pix_dim, (ypt + 1) * self.pix_dim, fill=self.faded_pen,outline='')
-        #     self.img[ypt][xpt - 1] = faded_float
-
         # draw main portion
         color_float = int(self.pen_color[-2:], 16) / 255
         for xpt, ypt in zip(
@@ -120,10 +120,17 @@ class NumbersGUI:
                 self.img[ypt][xpt] = color_float
 
     def update(self, event):
-        # update current prediction
-        guess = self.classifier.classify(self.img.flatten())
-        Label(self.answer_display, text=str(guess), bg='lavender', fg='MediumPurple3', padx=20, font=(48), anchor=CENTER).grid(row=1, column=0)
+        # update current prediction based on selected model
+        pred = 0
+        if self.selected_model.get() == 'from scratch':
+            pred = self.classifier.classify(self.img.flatten())
+        else:
+            if self.selected_model.get() != self.curr_pt_classifier:
+                self.curr_pt_classifier = self.selected_model.get()
+                self.pt_classifier = LenetClassifier(self.curr_pt_classifier)
+            pred = self.pt_classifier.predict(self.img)
 
+        Label(self.answer_display, text=str(pred), bg='lavender', fg='MediumPurple3', padx=20, font=(48), anchor=CENTER).grid(row=1, column=0)
         self.update_mini_display()
 
     def reset_canvas(self):
